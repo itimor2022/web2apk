@@ -178,7 +178,7 @@ class MainActivity : AppCompatActivity() {
             this@MainActivity, Lifecycle.Event.ON_DESTROY
         ).subscribe {
             if (it > 0) {
-                tvSkip.text = "跳过(${it}s)"
+                tvSkip.text = "跳过 ${it}"
             } else {
                 tvSkip.text = "跳过"
             }
