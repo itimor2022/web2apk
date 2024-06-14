@@ -44,9 +44,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var interval: Interval
 
-    private var url = "https://admin1.ignited-ekx.com/api/project/get_domain/?k=yl"
-    private var url2 = "https://appapi.ankre1.buzz/api/project/get_domain/?k=yl"
-    private var end = false
+    private var url = "https://13.248.251.116:7102/skl002"
 
     private val gson = Gson()
     protected var mSwipeBackHelper: SwipeBackHelper? = null
@@ -151,7 +149,7 @@ class MainActivity : AppCompatActivity() {
             tvSkip.visibility = View.VISIBLE
 //            tvSkip.isEnabled = false
             startSkip()
-            loadWeb(response)
+            loadWeb(url)
 //            val data = gson.fromJson(response, BaseResponse::class.java)
 //            if (data.code == 2000 && data.data.isNotEmpty()) {
 //                imvBg2.visibility = View.VISIBLE
@@ -163,13 +161,8 @@ class MainActivity : AppCompatActivity() {
 //                llError.visibility = View.VISIBLE
 //            }
         }.catch {
-            if (!end) {
-                url = url2
-                loadData()
-            } else {
-                Log.e("111", "loadData catch->")
-                llError.visibility = View.VISIBLE
-            }
+            Log.e("111", "loadData catch->")
+            llError.visibility = View.VISIBLE
         }
     }
 
@@ -178,7 +171,7 @@ class MainActivity : AppCompatActivity() {
             this@MainActivity, Lifecycle.Event.ON_DESTROY
         ).subscribe {
             if (it > 0) {
-                tvSkip.text = "跳过(${it}s)"
+                tvSkip.text = "跳过 ${it}"
             } else {
                 tvSkip.text = "跳过"
             }
