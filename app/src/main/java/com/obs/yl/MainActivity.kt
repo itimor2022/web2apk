@@ -1,8 +1,6 @@
 package com.obs.yl
 
-import android.R
 import android.app.Activity
-import android.app.AlertDialog
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Uri
@@ -159,6 +157,10 @@ class MainActivity : AppCompatActivity() {
         tvReload = findViewById(R.id.tv_reload)
         llError = findViewById(R.id.ll_error)
 
+        setWebSetting()
+    }
+
+    private fun setWebSetting() {
         val wbsetting = wb.settings
         with(wbsetting) {
             javaScriptEnabled = true
@@ -183,7 +185,7 @@ class MainActivity : AppCompatActivity() {
             tvSkip.visibility = View.GONE
         }
         tvReload.setOnClickListener {
-//            loadData()
+            //loadData()
         }
 
         onBackPressedDispatcher.addCallback {
