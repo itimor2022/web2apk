@@ -1,6 +1,8 @@
 package com.obs.yl
 
+import android.R
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Uri
@@ -58,7 +60,6 @@ class MainActivity : AppCompatActivity() {
         const val REQ_CODE_CHOOSER = 1
     }
 
-    val unencodedHtml = "<input type=file>"
     var webViewFileChooseCallback: ValueCallback<Array<Uri>>? = null
 
     private val webClient = object : WebViewClient() {
