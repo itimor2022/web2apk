@@ -22,6 +22,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MyApp"
+rootProject.name = "web2apk"
 include(":app")
  
