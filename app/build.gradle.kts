@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-//        applicationId = "com.obs.yl"
+        // applicationId = "com.obs.yl"
         applicationId = randomPackage()
         minSdk = 24
         targetSdk = 34
