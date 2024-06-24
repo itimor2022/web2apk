@@ -1,6 +1,6 @@
 package com.obs.yl
 
-import android.content.Context
+import android.app.Activity
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Uri
@@ -10,8 +10,10 @@ import android.text.TextUtils
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.webkit.PermissionRequest
 import android.webkit.SslErrorHandler
 import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -30,8 +32,8 @@ import com.drake.net.utils.TipUtils
 import com.drake.net.utils.scopeLife
 import com.google.gson.Gson
 import kotlinx.serialization.Serializable
-import android.Manifest.permission
 import java.util.concurrent.TimeUnit
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -52,6 +54,98 @@ class MainActivity : AppCompatActivity() {
     private val gson = Gson()
     protected var mSwipeBackHelper: SwipeBackHelper? = null
 
+    companion object {
+        const val REQ_CODE_CHOOSER = 1
+    }
+
+    val unencodedHtml = "<input type=file>"
+    var webViewFileChooseCallback: ValueCallback<Array<Uri>>? = null
+
+    private val webClient = object : WebViewClient() {
+        override fun onReceivedError(
+            view: WebView?,
+            request: WebResourceRequest,
+            error: WebResourceError?
+        ) {
+            super.onReceivedError(view, request, error)
+            Log.e("111", "onReceivedError->")
+            if (request.isForMainFrame) {
+                Log.e("111", "onReceivedError2->")
+                llError.visibility = View.VISIBLE
+            }
+        }
+
+        override fun onReceivedSslError(
+            view: WebView?,
+            handler: SslErrorHandler?,
+            error: SslError?
+        ) {
+//                super.onReceivedSslError(view, handler, error)
+            Log.e("111", "onReceivedSslError->")
+            handler?.proceed()
+        }
+
+        override fun shouldOverrideUrlLoading(
+            view: WebView?,
+            request: WebResourceRequest
+        ): Boolean {
+            if (request.url.toString().startsWith("http")) {
+                view?.loadUrl(request.url.toString())
+            } else {
+                try {
+                    startActivity(Intent(Intent.ACTION_VIEW, request.url))
+                } catch (e: Exception) {
+                    Log.d("111", "shouldOverrideUrlLoading: $e")
+                }
+            }
+            return true
+        }
+    }
+
+    private val chromeClient = object : WebChromeClient() {
+        override fun onPermissionRequest(request: PermissionRequest) {
+            request.grant(request.resources)
+        }
+
+        override fun onShowFileChooser(
+            webView: WebView,
+            filePathCallback: ValueCallback<Array<Uri>>?,
+            fileChooserParams: FileChooserParams?,
+        ): Boolean {
+            if (filePathCallback == null) return false
+            webViewFileChooseCallback = filePathCallback
+            startFileChooserActivity("*/*")
+            return true
+        }
+    }
+
+    fun startFileChooserActivity(mimeType: String) {
+        val intent = Intent(Intent.ACTION_GET_CONTENT)
+        intent.type = mimeType
+        intent.addCategory(Intent.CATEGORY_OPENABLE)
+
+        // special intent for Samsung file manager
+        val sIntent = Intent("com.sec.android.app.myfiles.PICK_DATA")
+        // if you want any file type, you can skip next line
+        sIntent.putExtra("CONTENT_TYPE", mimeType)
+        sIntent.addCategory(Intent.CATEGORY_DEFAULT)
+
+        val chooserIntent: Intent
+        if (packageManager.resolveActivity(sIntent, 0) != null) {
+            // it is device with Samsung file manager
+            chooserIntent = Intent.createChooser(sIntent, "Open file")
+            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(intent))
+        } else {
+            chooserIntent = Intent.createChooser(intent, "Open file")
+        }
+
+        try {
+            startActivityForResult(chooserIntent, REQ_CODE_CHOOSER)
+        } catch (ex: android.content.ActivityNotFoundException) {
+            Toast.makeText(applicationContext, "No suitable File Manager was found.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -71,47 +165,12 @@ class MainActivity : AppCompatActivity() {
             allowFileAccess = true
             allowContentAccess = true
             loadWithOverviewMode = true
+            javaScriptCanOpenWindowsAutomatically = true
+            mediaPlaybackRequiresUserGesture = false
         }
-        wb.webViewClient = object : WebViewClient() {
-            override fun onReceivedError(
-                view: WebView?,
-                request: WebResourceRequest,
-                error: WebResourceError?
-            ) {
-                super.onReceivedError(view, request, error)
-                Log.e("111", "onReceivedError->")
-                if (request.isForMainFrame) {
-                    Log.e("111", "onReceivedError2->")
-                    llError.visibility = View.VISIBLE
-                }
-            }
 
-            override fun onReceivedSslError(
-                view: WebView?,
-                handler: SslErrorHandler?,
-                error: SslError?
-            ) {
-//                super.onReceivedSslError(view, handler, error)
-                Log.e("111", "onReceivedSslError->")
-                handler?.proceed()
-            }
-
-            override fun shouldOverrideUrlLoading(
-                view: WebView?,
-                request: WebResourceRequest
-            ): Boolean {
-                if (request.url.toString().startsWith("http")) {
-                    view?.loadUrl(request.url.toString())
-                } else {
-                    try {
-                        startActivity(Intent(Intent.ACTION_VIEW, request.url))
-                    } catch (e: Exception) {
-                        Log.d("111", "shouldOverrideUrlLoading: $e")
-                    }
-                }
-                return true
-            }
-        }
+        wb.webChromeClient = chromeClient
+        wb.webViewClient = webClient
 
         if (!isNetworkConnected()) {
             "没有网络，请检查当前网络".showToast()
@@ -141,6 +200,22 @@ class MainActivity : AppCompatActivity() {
         }
 
         loadData()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        when {
+            requestCode == REQ_CODE_CHOOSER && resultCode == Activity.RESULT_OK && data != null -> {
+                val uri = when {
+                    data.dataString != null -> arrayOf(Uri.parse(data.dataString))
+                    data.clipData != null -> (0 until data.clipData!!.itemCount)
+                        .mapNotNull { data.clipData?.getItemAt(it)?.uri }
+                        .toTypedArray()
+                    else -> null
+                }
+                webViewFileChooseCallback?.onReceiveValue(uri)
+            }
+            else -> super.onActivityResult(requestCode, resultCode, data)
+        }
     }
 
     private fun loadData() {
