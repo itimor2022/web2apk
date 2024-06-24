@@ -1,11 +1,17 @@
 package com.obs.yl
 
 import android.app.Activity
+import android.content.ContentResolver
+import android.content.ContentValues
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Uri
 import android.net.http.SslError
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
 import android.text.TextUtils
 import android.util.Log
 import android.view.MotionEvent
@@ -25,6 +31,8 @@ import android.widget.Toast
 import androidx.activity.addCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import com.drake.net.Get
 import com.drake.net.time.Interval
@@ -32,6 +40,9 @@ import com.drake.net.utils.TipUtils
 import com.drake.net.utils.scopeLife
 import com.google.gson.Gson
 import kotlinx.serialization.Serializable
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 
@@ -55,10 +66,12 @@ class MainActivity : AppCompatActivity() {
     protected var mSwipeBackHelper: SwipeBackHelper? = null
 
     companion object {
-        const val REQ_CODE_CHOOSER = 1
+        private const val FILE_CHOOSER_REQUEST_CODE = 1
+        private const val CAMERA_PERMISSION_REQUEST_CODE = 2
     }
 
-    var webViewFileChooseCallback: ValueCallback<Array<Uri>>? = null
+    private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
+    private lateinit var currentPhotoUri: Uri
 
     private val webClient = object : WebViewClient() {
         override fun onReceivedError(
@@ -111,38 +124,93 @@ class MainActivity : AppCompatActivity() {
             filePathCallback: ValueCallback<Array<Uri>>?,
             fileChooserParams: FileChooserParams?,
         ): Boolean {
-            if (filePathCallback == null) return false
-            webViewFileChooseCallback = filePathCallback
-            startFileChooserActivity("*/*")
+            fileUploadCallback?.onReceiveValue(null)
+            fileUploadCallback = filePathCallback
+
+            if (fileChooserParams?.acceptTypes?.contains("image/*") == true && fileChooserParams.isCaptureEnabled) {
+                // Launch camera
+                if (ContextCompat.checkSelfPermission(
+                        this@MainActivity,
+                        android.Manifest.permission.CAMERA
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    launchCamera()
+                } else {
+                    ActivityCompat.requestPermissions(
+                        this@MainActivity,
+                        arrayOf(android.Manifest.permission.CAMERA),
+                        CAMERA_PERMISSION_REQUEST_CODE
+                    )
+                }
+            } else {
+                // Use file picker
+                val intent = Intent(Intent.ACTION_GET_CONTENT)
+                intent.addCategory(Intent.CATEGORY_OPENABLE)
+                intent.type = "image/*"
+                val chooserIntent = Intent.createChooser(intent, "选择文件")
+                startActivityForResult(chooserIntent, FILE_CHOOSER_REQUEST_CODE)
+            }
+
             return true
         }
     }
 
-    fun startFileChooserActivity(mimeType: String) {
-        val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.type = mimeType
-        intent.addCategory(Intent.CATEGORY_OPENABLE)
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
+            if (fileUploadCallback == null) {
+                super.onActivityResult(requestCode, resultCode, data)
+                return
+            }
 
-        // special intent for Samsung file manager
-        val sIntent = Intent("com.sec.android.app.myfiles.PICK_DATA")
-        // if you want any file type, you can skip next line
-        sIntent.putExtra("CONTENT_TYPE", mimeType)
-        sIntent.addCategory(Intent.CATEGORY_DEFAULT)
+            val results: Array<Uri>? = when {
+                resultCode == RESULT_OK && data?.data != null -> arrayOf(data.data!!)
+                resultCode == RESULT_OK -> arrayOf(currentPhotoUri)
+                else -> null
+            }
 
-        val chooserIntent: Intent
-        if (packageManager.resolveActivity(sIntent, 0) != null) {
-            // it is device with Samsung file manager
-            chooserIntent = Intent.createChooser(sIntent, "Open file")
-            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, arrayOf(intent))
+            fileUploadCallback?.onReceiveValue(results)
+            fileUploadCallback = null
         } else {
-            chooserIntent = Intent.createChooser(intent, "Open file")
+            super.onActivityResult(requestCode, resultCode, data)
         }
+    }
 
-        try {
-            startActivityForResult(chooserIntent, REQ_CODE_CHOOSER)
-        } catch (ex: android.content.ActivityNotFoundException) {
-            Toast.makeText(applicationContext, "No suitable File Manager was found.", Toast.LENGTH_SHORT).show()
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, launch camera
+                launchCamera()
+            } else {
+                // Permission denied, show an error or request permission again
+                Toast.makeText(this, "相机权限拒绝", Toast.LENGTH_SHORT).show()
+            }
         }
+    }
+
+    private fun launchCamera() {
+        val captureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        currentPhotoUri = createImageFileUri()
+        captureIntent.putExtra(MediaStore.EXTRA_OUTPUT, currentPhotoUri)
+        startActivityForResult(captureIntent, FILE_CHOOSER_REQUEST_CODE)
+    }
+
+    private fun createImageFileUri(): Uri {
+        val fileName = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date()) + ".jpg"
+        val contentValues = ContentValues().apply {
+            put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
+            put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_DCIM)
+            }
+        }
+        val resolver: ContentResolver = contentResolver
+        val imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+        return imageUri ?: throw RuntimeException("图片链接为空")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -203,22 +271,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         loadData()
-    }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        when {
-            requestCode == REQ_CODE_CHOOSER && resultCode == Activity.RESULT_OK && data != null -> {
-                val uri = when {
-                    data.dataString != null -> arrayOf(Uri.parse(data.dataString))
-                    data.clipData != null -> (0 until data.clipData!!.itemCount)
-                        .mapNotNull { data.clipData?.getItemAt(it)?.uri }
-                        .toTypedArray()
-                    else -> null
-                }
-                webViewFileChooseCallback?.onReceiveValue(uri)
-            }
-            else -> super.onActivityResult(requestCode, resultCode, data)
-        }
     }
 
     private fun loadData() {
@@ -270,7 +323,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadWeb(url: String) {
         wb.loadUrl(url)
-//        wb.loadUrl("https://githubwww.com/")
     }
 
     private fun isNetworkConnected(): Boolean {
