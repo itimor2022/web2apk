@@ -3,6 +3,7 @@ package com.obs.yl
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
+import android.net.Uri
 import android.net.http.SslError
 import android.os.Bundle
 import android.text.TextUtils
@@ -10,6 +11,7 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.SslErrorHandler
+import android.webkit.ValueCallback
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -28,6 +30,7 @@ import com.drake.net.utils.TipUtils
 import com.drake.net.utils.scopeLife
 import com.google.gson.Gson
 import kotlinx.serialization.Serializable
+import android.Manifest.permission
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
@@ -61,9 +64,14 @@ class MainActivity : AppCompatActivity() {
         tvReload = findViewById(R.id.tv_reload)
         llError = findViewById(R.id.ll_error)
 
-        val setting = wb.settings
-        setting.javaScriptEnabled = true
-        setting.domStorageEnabled = true
+        val wbsetting = wb.settings
+        with(wbsetting) {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            allowFileAccess = true
+            allowContentAccess = true
+            loadWithOverviewMode = true
+        }
         wb.webViewClient = object : WebViewClient() {
             override fun onReceivedError(
                 view: WebView?,
@@ -188,7 +196,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun isNetworkConnected(): Boolean {
-        val mConnectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE)
+        val mConnectivityManager = getSystemService(CONNECTIVITY_SERVICE)
         if (mConnectivityManager is ConnectivityManager) {
             val mNetworkInfo = mConnectivityManager.activeNetworkInfo
             return mNetworkInfo?.isAvailable ?: false
@@ -220,4 +228,3 @@ fun String.showToast() {
     if (this.isEmpty()) return
     Toast.makeText(App.application, this, Toast.LENGTH_SHORT).show()
 }
-
