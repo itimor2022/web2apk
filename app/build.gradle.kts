@@ -23,10 +23,10 @@ android {
     defaultConfig {
         // applicationId = "com.obs.yl"
         applicationId = randomPackage()
-        minSdk = 24
+        minSdk = 21
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -94,6 +94,6 @@ fun randomPackage(): String {
             return "$p0.$p1"
         }
     })
-    println("result=" + result)
+    println("result=$result")
     return result
 }
