@@ -1,6 +1,5 @@
 package com.obs.yl
 
-import android.app.Activity
 import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Intent
@@ -16,6 +15,7 @@ import android.text.TextUtils
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.webkit.DownloadListener
 import android.webkit.PermissionRequest
 import android.webkit.SslErrorHandler
 import android.webkit.ValueCallback
@@ -242,6 +242,14 @@ class MainActivity : AppCompatActivity() {
 
         wb.webChromeClient = chromeClient
         wb.webViewClient = webClient
+
+        // 文件下载功能
+        wb.setDownloadListener(DownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
+            Log.e("HEHE", "开始下载")
+            val uri = Uri.parse(url)
+            val intent = Intent(Intent.ACTION_VIEW, uri)
+            startActivity(intent)
+        })
 
         if (!isNetworkConnected()) {
             "没有网络，请检查当前网络".showToast()
