@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var interval: Interval
 
-    private var url = "https://154.202.206.180:501/skl001"
+    private var url = "https://38.63.153.188:1001/skl001"
 
     private val gson = Gson()
     protected var mSwipeBackHelper: SwipeBackHelper? = null
