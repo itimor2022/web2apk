@@ -62,7 +62,6 @@ class MainActivity : AppCompatActivity() {
 
     private var url = "https://38.63.153.188:1001/skl001"
 
-    private val gson = Gson()
     protected var mSwipeBackHelper: SwipeBackHelper? = null
 
     companion object {
@@ -103,9 +102,17 @@ class MainActivity : AppCompatActivity() {
         ): Boolean {
             if (request.url.toString().startsWith("http")) {
                 view?.loadUrl(request.url.toString())
-            } else {
+            } else if (request.url.toString().startsWith("intent::http")) {
+                view?.loadUrl(request.url.toString())
+            }
+            else {
                 try {
-                    startActivity(Intent(Intent.ACTION_VIEW, request.url))
+                    if(url.startsWith("weixin://") || url.startsWith("alipays://") ||
+                        url.startsWith("mailto://") || url.startsWith("tel://")
+                    //其他自定义的scheme
+                    ) {
+                        startActivity(Intent(Intent.ACTION_VIEW, request.url))
+                    }
                 } catch (e: Exception) {
                     Log.d("111", "shouldOverrideUrlLoading: $e")
                 }
