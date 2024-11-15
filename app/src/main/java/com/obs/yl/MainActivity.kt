@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var interval: Interval
 
-    private var url = "https://38.63.153.188:1001/skl001"
+    private var url = "https://154.202.156.155:701/skl001"
 
     protected var mSwipeBackHelper: SwipeBackHelper? = null
 
