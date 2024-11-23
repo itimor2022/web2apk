@@ -29,6 +29,23 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        multiDexEnabled = true
+
+        ndk {
+            abiFilters.apply {
+                add("armeabi-v7a")
+                add("arm64-v8a")
+            }
+        }
+
+        applicationVariants.all {
+            outputs.all {
+                if (this is com.android.build.gradle.internal.api.ApkVariantOutputImpl) {
+                    this.outputFileName = "IronFx-$versionName.apk"
+                }
+            }
+        }
     }
 
     buildTypes {
@@ -41,13 +58,13 @@ android {
                 "proguard-rules.txt"
             )
         }
-//        release {
-//            isMinifyEnabled = true
-//            proguardFiles(
-//                getDefaultProguardFile("proguard-android-optimize.txt"),
-//                "proguard-rules.txt"
-//            )
-//        }
+        release {
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.txt"
+            )
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
