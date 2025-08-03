@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.obs.yl"
+    namespace = "com.apple.fmjh2025"
     compileSdk = 34
 
     signingConfigs {
@@ -21,8 +21,8 @@ android {
     }
 
     defaultConfig {
-        // applicationId = "com.obs.yl"
-        applicationId = randomPackage()
+         applicationId = "com.apple.fmjh2025"
+//        applicationId = randomPackage()
         minSdk = 21
         targetSdk = 34
         versionCode = 1
