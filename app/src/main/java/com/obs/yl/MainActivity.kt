@@ -64,11 +64,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var interval: Interval
 
     private val configJsonUrl =
-        "https://hixdaren.oss-cn-hangzhou.aliyuncs.com/fmjh/fmjh.txt" // 配置文件地址
+        "https://hixdaren.oss-cn-hangzhou.aliyuncs.com/fmjh/duo.txt" // 配置文件地址
     private val defaultUrl = "https://web.b11.icu"
 
     // 本地保存 config.json 的路径
-    private val configFile by lazy { File(filesDir, "fmjh.txt") }
+    private val configFile by lazy { File(filesDir, "duo.txt") }
 
     private val gson = Gson()
     protected var mSwipeBackHelper: SwipeBackHelper? = null
@@ -279,7 +279,7 @@ class MainActivity : AppCompatActivity() {
             tvSkip.visibility = View.GONE
         }
         tvReload.setOnClickListener {
-            //loadData()
+            loadData()
         }
 
         onBackPressedDispatcher.addCallback {
@@ -306,35 +306,33 @@ class MainActivity : AppCompatActivity() {
             var finalUrl = defaultUrl
 
             try {
-                // 1. 下载 txt 文件，内容是一行 URL
+                // 1. 下载 txt 文件，可能有多行域名
                 val response = Get<String>(configJsonUrl).await()
                 configFile.writeText(response.trim())
-                Log.e("111", "已更新 fmjh.txt -> $configFile")
+                Log.e("111", "已更新 duo.txt -> $configFile")
                 logAndToast("已更新最新线路")
-
-                // 2. 读取并验证 URL
-                val urlFromTxt = configFile.readText().trim()
-                Log.e("111", "txt 中读取到的 URL：$urlFromTxt")
-                if (isValidUrl(urlFromTxt) && isUrlReachable(urlFromTxt)) {
-                    finalUrl = urlFromTxt
-                } else {
-                    Log.e("111", "txt 中的 URL 无效或无法访问，使用默认 URL")
-                    logAndToast("txt 中的 URL 无法访问，使用默认 URL")
-                }
             } catch (e: Exception) {
                 Log.e("111", "获取 txt 出错 -> ${e.message}")
-                logAndToast("获取 txt 出错 -> ${e.message}")
+                logAndToast("获取线路失败")
+            }
 
-                // 如果下载失败，尝试本地文件
-                if (configFile.exists()) {
-                    try {
-                        val urlFromTxt = configFile.readText().trim()
-                        if (isValidUrl(urlFromTxt) && isUrlReachable(urlFromTxt)) {
-                            finalUrl = urlFromTxt
+            // 2. 从本地读取多行 URL 并按顺序测试
+            if (configFile.exists()) {
+                try {
+                    val urls = configFile.readLines()
+                        .map { it.trim() }
+                        .filter { it.isNotEmpty() && isValidUrl(it) }
+
+                    for (url in urls) {
+                        Log.e("111", "测试URL：$url")
+                        if (isUrlReachable(url)) {
+                            finalUrl = url
+                            Log.e("111", "可用URL：$url")
+                            break
                         }
-                    } catch (e2: Exception) {
-                        Log.e("111", "读取本地 txt 出错 -> ${e2.message}")
                     }
+                } catch (e: Exception) {
+                    Log.e("111", "读取本地 txt 出错 -> ${e.message}")
                 }
             }
 
@@ -345,6 +343,7 @@ class MainActivity : AppCompatActivity() {
             loadWeb(finalUrl)
         }
     }
+
 
     /**
      * 检查URL是否可访问（协程版）
