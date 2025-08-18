@@ -63,9 +63,15 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var interval: Interval
 
-    private val configJsonUrl =
-        "https://hixdaren.oss-cn-hangzhou.aliyuncs.com/fmjh/duo.txt" // 配置文件地址
-    private val defaultUrl = "https://web.b11.icu"
+    private val configJsonUrls = listOf(
+        "https://bk-1365383788.cos.ap-nanjing.myqcloud.com/fmjh/duo.txt",
+        "https://ck-1365383788.cos.ap-chongqing.myqcloud.com/fmjh/duo.txt",
+        "https://gz-1365383788.cos.ap-guangzhou.myqcloud.com/fmjh/duo.txt",
+        "https://sk-1365383788.cos.ap-hongkong.myqcloud.com/fmjh/duo.txt",
+        "https://sg-1365383788.cos.ap-singapore.myqcloud.com/fmjh/duo.txt"
+    )
+
+    private val defaultUrl = "https://fmjh.538lu.icu"
 
     // 本地保存 config.json 的路径
     private val configFile by lazy { File(filesDir, "duo.txt") }
@@ -305,15 +311,22 @@ class MainActivity : AppCompatActivity() {
             llError.visibility = View.GONE
             var finalUrl = defaultUrl
 
-            try {
-                // 1. 下载 txt 文件，可能有多行域名
-                val response = Get<String>(configJsonUrl).await()
-                configFile.writeText(response.trim())
-                Log.e("111", "已更新 duo.txt -> $configFile")
-                logAndToast("已更新最新线路")
-            } catch (e: Exception) {
-                Log.e("111", "获取 txt 出错 -> ${e.message}")
-                logAndToast("获取线路失败")
+            var fetched = false
+            for (url in configJsonUrls) {
+                try {
+                    Log.e("111", "尝试获取线路: $url")
+                    val response = Get<String>(url).await()
+                    configFile.writeText(response.trim())
+                    Log.e("111", "已更新 duo.txt -> $configFile")
+                    logAndToast("已更新最新线路")
+                    fetched = true
+                    break
+                } catch (e: Exception) {
+                    Log.e("111", "获取失败 $url -> ${e.message}")
+                }
+            }
+            if (!fetched) {
+                logAndToast("所有线路获取失败，使用默认域名")
             }
 
             // 2. 从本地读取多行 URL 并按顺序测试
