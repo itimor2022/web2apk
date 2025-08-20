@@ -1,4 +1,4 @@
-package com.apple.fmjh2025
+package com.ikaweq.zgqq201
 
 import android.app.Application
 import com.drake.net.NetConfig

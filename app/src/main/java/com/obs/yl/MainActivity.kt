@@ -1,4 +1,4 @@
-package com.apple.fmjh2025
+package com.ikaweq.zgqq201
 
 import android.content.ContentResolver
 import android.content.ContentValues
@@ -37,7 +37,6 @@ import com.drake.net.Get
 import com.drake.net.time.Interval
 import com.drake.net.utils.TipUtils
 import com.drake.net.utils.scopeLife
-import com.google.gson.Gson
 import kotlinx.serialization.Serializable
 import java.io.File
 import java.text.SimpleDateFormat
@@ -64,19 +63,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var interval: Interval
 
     private val configJsonUrls = listOf(
-        "https://bk-1365383788.cos.ap-nanjing.myqcloud.com/fmjh/duo.txt",
-        "https://ck-1365383788.cos.ap-chongqing.myqcloud.com/fmjh/duo.txt",
-        "https://gz-1365383788.cos.ap-guangzhou.myqcloud.com/fmjh/duo.txt",
-        "https://sk-1365383788.cos.ap-hongkong.myqcloud.com/fmjh/duo.txt",
-        "https://sg-1365383788.cos.ap-singapore.myqcloud.com/fmjh/duo.txt"
+        "https://1ieak.oss-cn-shanghai.aliyuncs.com/zgjq/duo.txt",
+        "https://2adarql.oss-cn-shenzhen.aliyuncs.com/zgjq/duo.txt",
+        "https://3daeuaik.oss-cn-hangzhou.aliyuncs.com/zgjq/duo.txt",
+        "https://kkbaa.oss-cn-beijing.aliyuncs.com/zgjq/duo.txtt",
     )
 
-    private val defaultUrl = "https://fmjh.538lu.icu"
+    private val defaultUrl = "https://wb.n15x7i.icu"
 
     // 本地保存 config.json 的路径
     private val configFile by lazy { File(filesDir, "duo.txt") }
 
-    private val gson = Gson()
     protected var mSwipeBackHelper: SwipeBackHelper? = null
 
     companion object {

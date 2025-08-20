@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.apple.fmjh2025"
+    namespace = "com.ikaweq.zgqq201"
     compileSdk = 34
 
     signingConfigs {
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-         applicationId = "com.apple.fmjh2025"
+         applicationId = "com.ikaweq.zgqq201"
 //        applicationId = randomPackage()
         minSdk = 21
         targetSdk = 34
