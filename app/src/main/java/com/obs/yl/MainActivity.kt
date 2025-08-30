@@ -63,13 +63,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var interval: Interval
 
     private val configJsonUrls = listOf(
-        "https://1ieak.oss-cn-shanghai.aliyuncs.com/zgjq/duo.txt",
-        "https://2adarql.oss-cn-shenzhen.aliyuncs.com/zgjq/duo.txt",
-        "https://3daeuaik.oss-cn-hangzhou.aliyuncs.com/zgjq/duo.txt",
-        "https://kkbaa.oss-cn-beijing.aliyuncs.com/zgjq/duo.txtt",
+        "https://d3sw9opqqkvl51.cloudfront.net/zgjq/duo.txt",
+        "https://dmt0o317bhzjr.cloudfront.net/zgjq/duo.txt",
+        "https://d1takcdp1w7xk8.cloudfront.net/zgjq/duo.txt",
+        "https://d1iqpogh7lx3ke.cloudfront.net/zgjq/duo.txt",
     )
 
-    private val defaultUrl = "https://wb.n15x7i.icu"
+    private val defaultUrl = "https://zgjq.qgf3.top:882/"
 
     // 本地保存 config.json 的路径
     private val configFile by lazy { File(filesDir, "duo.txt") }
