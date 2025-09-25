@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.apple.fmjh2025"
+    namespace = "com.hauwei.shgg2025"
     compileSdk = 34
 
     signingConfigs {
@@ -21,12 +21,12 @@ android {
     }
 
     defaultConfig {
-         applicationId = "com.apple.fmjh2025"
+         applicationId = "com.hauwei.shgg2025"
 //        applicationId = randomPackage()
         minSdk = 21
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0.1"
+        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

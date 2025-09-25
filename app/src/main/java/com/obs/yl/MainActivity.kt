@@ -1,4 +1,4 @@
-package com.apple.fmjh2025
+package com.hauwei.shgg2025
 
 import android.content.ContentResolver
 import android.content.ContentValues
@@ -64,14 +64,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var interval: Interval
 
     private val configJsonUrls = listOf(
-        "https://bk-1365383788.cos.ap-nanjing.myqcloud.com/fmjh/duo.txt",
-        "https://ck-1365383788.cos.ap-chongqing.myqcloud.com/fmjh/duo.txt",
-        "https://gz-1365383788.cos.ap-guangzhou.myqcloud.com/fmjh/duo.txt",
-        "https://sk-1365383788.cos.ap-hongkong.myqcloud.com/fmjh/duo.txt",
-        "https://sg-1365383788.cos.ap-singapore.myqcloud.com/fmjh/duo.txt"
+        "https://dann54zb7yar1.cloudfront.net/pop/duo.txt",
+        "https://d2pvzx7xdvbqsq.cloudfront.net/pop/duo.txt",
+        "https://d3a7lygnh9yxfj.cloudfront.net/pop/duo.txt",
     )
 
-    private val defaultUrl = "https://fmjh.538lu.icu"
+    private val defaultUrl = "https://xc.xy451.cc:6443"
 
     // 本地保存 config.json 的路径
     private val configFile by lazy { File(filesDir, "duo.txt") }
@@ -366,7 +364,7 @@ class MainActivity : AppCompatActivity() {
         try {
             connection = URL(testUrl).openConnection() as HttpURLConnection
             connection.apply {
-                connectTimeout = 5000
+                connectTimeout = 8000
                 readTimeout = 5000
                 requestMethod = "HEAD"
                 instanceFollowRedirects = true
