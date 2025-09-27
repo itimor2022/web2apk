@@ -307,7 +307,7 @@ class MainActivity : AppCompatActivity() {
     private fun loadData() {
         scopeLife {
             llError.visibility = View.GONE
-            var finalUrl = defaultUrl
+            var finalUrl: String? = null
 
             var fetched = false
             for (url in configJsonUrls) {
@@ -316,15 +316,14 @@ class MainActivity : AppCompatActivity() {
                     val response = Get<String>(url).await()
                     configFile.writeText(response.trim())
                     Log.e("111", "已更新 duo.txt -> $configFile")
-                    logAndToast("已更新最新线路")
                     fetched = true
                     break
                 } catch (e: Exception) {
-                    Log.e("111", "获取失败 $url -> ${e.message}")
+                    logAndToast("入口域名获取失败，请联系客服")
                 }
             }
             if (!fetched) {
-                logAndToast("所有线路获取失败，使用默认域名")
+                logAndToast("所有落地域名获取失败，请联系客服")
             }
 
             // 2. 从本地读取多行 URL 并按顺序测试
@@ -347,14 +346,24 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            // 3. 加载网页
+            // 3. 如果本地线路不可用，检测默认域名
+            if (finalUrl == null) {
+                if (isUrlReachable(defaultUrl)) {
+                    finalUrl = defaultUrl
+                } else {
+                    logAndToast("默认域名检测失败，请联系客服")
+                    llError.visibility = View.VISIBLE
+                    return@scopeLife
+                }
+            }
+
+            // 4. 加载网页
             imvBg2.visibility = View.VISIBLE
             tvSkip.visibility = View.VISIBLE
             startSkip()
-            loadWeb(finalUrl)
+            loadWeb(finalUrl!!)
         }
     }
-
 
     /**
      * 检查URL是否可访问（协程版）
