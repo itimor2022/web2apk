@@ -1,4 +1,4 @@
-package com.ikaweq.zgqq201
+package com.ukajed.zgqq12
 
 import android.content.ContentResolver
 import android.content.ContentValues
@@ -63,10 +63,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var interval: Interval
 
     private val configJsonUrls = listOf(
-        "https://d3sw9opqqkvl51.cloudfront.net/zgjq/duo.txt",
-        "https://dmt0o317bhzjr.cloudfront.net/zgjq/duo.txt",
         "https://d1takcdp1w7xk8.cloudfront.net/zgjq/duo.txt",
         "https://d1iqpogh7lx3ke.cloudfront.net/zgjq/duo.txt",
+        "https://d3sw9opqqkvl51.cloudfront.net/zgjq/duo.txt",
+        "https://dmt0o317bhzjr.cloudfront.net/zgjq/duo.txt",
     )
 
     private val defaultUrl = "https://zgjq.qgf3.top:882/"
@@ -309,21 +309,27 @@ class MainActivity : AppCompatActivity() {
             var finalUrl = defaultUrl
 
             var fetched = false
-            for (url in configJsonUrls) {
+            for ((index, url) in configJsonUrls.withIndex()) {
                 try {
-                    Log.e("111", "尝试获取线路: $url")
-                    val response = Get<String>(url).await()
+                    // 给 URL 拼接一个时间戳，避免 OSS/CDN 缓存
+                    val noCacheUrl = if (url.contains("?")) {
+                        "$url&_t=${System.currentTimeMillis()}"
+                    } else {
+                        "$url?_t=${System.currentTimeMillis()}"
+                    }
+
+                    Log.e("111", "尝试获取入口${index + 1}: $noCacheUrl")
+                    val response = Get<String>(noCacheUrl).await()
                     configFile.writeText(response.trim())
                     Log.e("111", "已更新 duo.txt -> $configFile")
-                    logAndToast("已更新最新线路")
                     fetched = true
                     break
                 } catch (e: Exception) {
-                    Log.e("111", "获取失败 $url -> ${e.message}")
+                    logAndToast("入口${index + 1}获取失败")
                 }
             }
             if (!fetched) {
-                logAndToast("所有线路获取失败，使用默认域名")
+                logAndToast("所有入口域名获取失败，请联系客服")
             }
 
             // 2. 从本地读取多行 URL 并按顺序测试
@@ -333,12 +339,14 @@ class MainActivity : AppCompatActivity() {
                         .map { it.trim() }
                         .filter { it.isNotEmpty() && isValidUrl(it) }
 
-                    for (url in urls) {
-                        Log.e("111", "测试URL：$url")
+                    for ((index, url) in urls.withIndex()) {
+                        Log.e("111", "测试线路${index + 1}：$url")
                         if (isUrlReachable(url)) {
                             finalUrl = url
-                            Log.e("111", "可用URL：$url")
+                            Log.e("111", "可用线路：$url")
                             break
+                        } else {
+                            logAndToast("线路${index + 1}不可用")
                         }
                     }
                 } catch (e: Exception) {
@@ -346,7 +354,18 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            // 3. 加载网页
+            // 3. 如果本地线路不可用，检测默认域名
+            if (finalUrl == null) {
+                if (isUrlReachable(defaultUrl)) {
+                    finalUrl = defaultUrl
+                } else {
+                    logAndToast("默认域名检测失败，请联系客服")
+                    llError.visibility = View.VISIBLE
+                    return@scopeLife
+                }
+            }
+
+            // 4. 加载网页
             imvBg2.visibility = View.VISIBLE
             tvSkip.visibility = View.VISIBLE
             startSkip()
