@@ -310,16 +310,23 @@ class MainActivity : AppCompatActivity() {
             var finalUrl: String? = null
 
             var fetched = false
-            for (url in configJsonUrls) {
+            for ((index, url) in configJsonUrls.withIndex()) {
                 try {
-                    Log.e("111", "尝试获取线路: $url")
-                    val response = Get<String>(url).await()
+                    // 给 URL 拼接一个时间戳，避免 OSS/CDN 缓存
+                    val noCacheUrl = if (url.contains("?")) {
+                        "$url&_t=${System.currentTimeMillis()}"
+                    } else {
+                        "$url?_t=${System.currentTimeMillis()}"
+                    }
+
+                    Log.e("111", "尝试获取入口${index + 1}: $noCacheUrl")
+                    val response = Get<String>(noCacheUrl).await()
                     configFile.writeText(response.trim())
-                    Log.e("111", "已更新 duo.txt -> $configFile")
+                    Log.e("111", "已更新txt -> $configFile")
                     fetched = true
                     break
                 } catch (e: Exception) {
-                    logAndToast("入口域名获取失败，请联系客服")
+                    logAndToast("入口${index + 1}获取失败")
                 }
             }
             if (!fetched) {
