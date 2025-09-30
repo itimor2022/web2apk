@@ -321,7 +321,7 @@ class MainActivity : AppCompatActivity() {
                     Log.e("111", "尝试获取入口${index + 1}: $noCacheUrl")
                     val response = Get<String>(noCacheUrl).await()
                     configFile.writeText(response.trim())
-                    Log.e("111", "已更新 duo.txt -> $configFile")
+                    Log.e("111", "已更新txt -> $configFile")
                     fetched = true
                     break
                 } catch (e: Exception) {
