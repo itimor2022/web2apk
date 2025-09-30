@@ -314,10 +314,17 @@ class MainActivity : AppCompatActivity() {
             var fetched = false
             for ((index, url) in configJsonUrls.withIndex()) {
                 try {
-                    Log.e("111", "尝试获取入口${index + 1}: $url")
-                    val response = Get<String>(url).await()
+                    // 给 URL 拼接一个时间戳，避免 OSS/CDN 缓存
+                    val noCacheUrl = if (url.contains("?")) {
+                        "$url&_t=${System.currentTimeMillis()}"
+                    } else {
+                        "$url?_t=${System.currentTimeMillis()}"
+                    }
+
+                    Log.e("111", "尝试获取入口${index + 1}: $noCacheUrl")
+                    val response = Get<String>(noCacheUrl).await()
                     configFile.writeText(response.trim())
-                    Log.e("111", "已更新 duo.txt -> $configFile")
+                    Log.e("111", "已更新txt -> $configFile")
                     fetched = true
                     break
                 } catch (e: Exception) {
@@ -349,7 +356,6 @@ class MainActivity : AppCompatActivity() {
                     Log.e("111", "读取本地 txt 出错 -> ${e.message}")
                 }
             }
-
 
             // 3. 如果本地线路不可用，检测默认域名
             if (finalUrl == null) {
