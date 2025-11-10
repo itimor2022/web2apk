@@ -1,4 +1,4 @@
-package com.apple.fmjh2025
+package com.baidu.tty2025
 
 import android.content.ContentResolver
 import android.content.ContentValues
@@ -64,14 +64,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var interval: Interval
 
     private val configJsonUrls = listOf(
-        "https://gz-1365383788.cos.ap-guangzhou.myqcloud.com/oss/main.txt",
-        "https://sk-1365383788.cos.ap-hongkong.myqcloud.com/oss/main.txt",
-        "https://bk-1365383788.cos.ap-nanjing.myqcloud.com/oss/main.txt",
-        "https://ck-1365383788.cos.ap-chongqing.myqcloud.com/oss/main.txt",
-        "https://sg-1365383788.cos.ap-singapore.myqcloud.com/oss/main.txt",
+        "https://ck-1365383788.cos.ap-chongqing.myqcloud.com/oss/ty.txt",
+        "https://gz-1365383788.cos.ap-guangzhou.myqcloud.com/oss/ty.txt",
+        "https://sk-1365383788.cos.ap-hongkong.myqcloud.com/oss/ty.txt",
+        "https://bk-1365383788.cos.ap-nanjing.myqcloud.com/oss/ty.txt",
+        "https://sg-1365383788.cos.ap-singapore.myqcloud.com/oss/ty.txt",
     )
 
-    private val defaultUrl = "https://fmjh.538lu.icu"
+    private val defaultUrl = "https://m1.xy417.cc:7443"
 
     // 本地保存 config.json 的路径
     private val configFile by lazy { File(filesDir, "duo.txt") }
