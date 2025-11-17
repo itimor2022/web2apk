@@ -46,6 +46,8 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.TimeoutCancellationException
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -64,17 +66,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var interval: Interval
 
     private val configJsonUrls = listOf(
+        "https://108.186.186.63:701/main.txt",
+        "https://ck-1365383788.cos.ap-chongqing.myqcloud.com/oss/main.txt",
+        "https://sg-1365383788.cos.ap-singapore.myqcloud.com/oss/main.txt",
         "https://gz-1365383788.cos.ap-guangzhou.myqcloud.com/oss/main.txt",
         "https://sk-1365383788.cos.ap-hongkong.myqcloud.com/oss/main.txt",
         "https://bk-1365383788.cos.ap-nanjing.myqcloud.com/oss/main.txt",
-        "https://ck-1365383788.cos.ap-chongqing.myqcloud.com/oss/main.txt",
-        "https://sg-1365383788.cos.ap-singapore.myqcloud.com/oss/main.txt",
     )
 
     private val defaultUrl = "https://fmjh.538lu.icu"
 
     // 本地保存 config.json 的路径
-    private val configFile by lazy { File(filesDir, "duo.txt") }
+    private val configFile by lazy { File(filesDir, "main.txt") }
 
     private val gson = Gson()
     protected var mSwipeBackHelper: SwipeBackHelper? = null
@@ -82,6 +85,12 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val FILE_CHOOSER_REQUEST_CODE = 1
         private const val CAMERA_PERMISSION_REQUEST_CODE = 2
+
+        // 新增超时时间常量
+        private const val ENTRY_REQUEST_TIMEOUT = 8000L // 入口请求超时 10秒
+        private const val LINE_TEST_TIMEOUT = 8000L     // 线路测试超时 8秒
+        private const val CONNECT_TIMEOUT = 10000       // 连接超时 10秒
+        private const val READ_TIMEOUT = 10000          // 读取超时 10秒
     }
 
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
@@ -322,17 +331,44 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     Log.e("111", "尝试获取入口${index + 1}: $noCacheUrl")
-                    val response = Get<String>(noCacheUrl).await()
-                    configFile.writeText(response.trim())
-                    Log.e("111", "已更新txt -> $configFile")
-                    fetched = true
-                    break
+                    val startTime = System.currentTimeMillis()
+
+                    // 添加超时控制
+                    val response = withTimeoutOrNull(ENTRY_REQUEST_TIMEOUT) {
+                        Get<String>(noCacheUrl).await()
+                    }
+
+                    val endTime = System.currentTimeMillis()
+                    val duration = endTime - startTime
+
+                    if (response != null) {
+                        Log.e("111", "入口${index + 1}获取成功，耗时: ${duration}ms")
+                        configFile.writeText(response.trim())
+                        Log.e("111", "已更新txt -> $configFile")
+                        fetched = true
+                        break  // 只有成功时才跳出循环
+                    } else {
+                        Log.e("111", "入口${index + 1}请求超时，耗时: ${duration}ms")
+                        logAndToast("入口${index + 1}请求超时")
+                        // 超时时不break，继续尝试下一个入口
+                    }
                 } catch (e: Exception) {
+                    Log.e("111", "入口${index + 1}获取失败: ${e.message}")
                     logAndToast("入口${index + 1}获取失败")
+                    // 异常时不break，继续尝试下一个入口
                 }
             }
+
+            // 如果所有入口都失败了，但有本地缓存文件，仍然继续
             if (!fetched) {
-                logAndToast("所有入口域名获取失败，请联系客服")
+                if (configFile.exists() && configFile.length() > 0) {
+                    Log.e("111", "所有入口获取失败，但使用本地缓存的配置文件")
+                    fetched = true
+                } else {
+                    logAndToast("所有入口域名获取失败，请联系客服")
+                    llError.visibility = View.VISIBLE
+                    return@scopeLife
+                }
             }
 
             // 2. 从本地读取多行 URL 并按顺序测试
@@ -341,6 +377,8 @@ class MainActivity : AppCompatActivity() {
                     val urls = configFile.readLines()
                         .map { it.trim() }
                         .filter { it.isNotEmpty() && isValidUrl(it) }
+
+                    Log.e("111", "找到 ${urls.size} 个线路进行测试")
 
                     for ((index, url) in urls.withIndex()) {
                         Log.e("111", "测试线路${index + 1}：$url")
@@ -359,8 +397,10 @@ class MainActivity : AppCompatActivity() {
 
             // 3. 如果本地线路不可用，检测默认域名
             if (finalUrl == null) {
+                Log.e("111", "开始测试默认域名: $defaultUrl")
                 if (isUrlReachable(defaultUrl)) {
                     finalUrl = defaultUrl
+                    Log.e("111", "默认域名可用: $defaultUrl")
                 } else {
                     logAndToast("默认域名检测失败，请联系客服")
                     llError.visibility = View.VISIBLE
@@ -369,13 +409,13 @@ class MainActivity : AppCompatActivity() {
             }
 
             // 4. 加载网页
+            Log.e("111", "最终选择的URL: $finalUrl")
             imvBg2.visibility = View.VISIBLE
             tvSkip.visibility = View.VISIBLE
             startSkip()
             loadWeb(finalUrl!!)
         }
     }
-
 
     /**
      * 检查URL是否可访问（协程版）
@@ -385,16 +425,20 @@ class MainActivity : AppCompatActivity() {
         try {
             connection = URL(testUrl).openConnection() as HttpURLConnection
             connection.apply {
-                connectTimeout = 5000
-                readTimeout = 5000
+                // 使用常量设置超时
+                connectTimeout = CONNECT_TIMEOUT
+                readTimeout = READ_TIMEOUT
                 requestMethod = "HEAD"
                 instanceFollowRedirects = true
                 setRequestProperty("User-Agent", "Mozilla/5.0")
                 useCaches = false
             }
             connection.connect()
-            connection.responseCode in 200..399
+            val responseCode = connection.responseCode
+            Log.e("111", "URL检测 $testUrl 响应码: $responseCode")
+            responseCode in 200..399
         } catch (e: Exception) {
+            Log.e("111", "URL检测 $testUrl 失败: ${e.message}")
             false
         } finally {
             connection?.disconnect()
@@ -412,7 +456,6 @@ class MainActivity : AppCompatActivity() {
             false
         }
     }
-
 
     private fun startSkip() {
         interval = Interval(0, 1, TimeUnit.SECONDS, 3, 0).life(
@@ -444,9 +487,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean =
-        mSwipeBackHelper.dispatchTouchEvent(ev) {
+        mSwipeBackHelper?.dispatchTouchEvent(ev) {
             super.dispatchTouchEvent(ev)
-        }
+        } ?: super.dispatchTouchEvent(ev)
 }
 
 /**
