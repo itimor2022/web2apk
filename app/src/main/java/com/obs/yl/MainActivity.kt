@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity() {
     private val defaultUrl = "https://m1.xy417.cc:7443"
 
     // 本地保存 config.json 的路径
-    private val configFile by lazy { File(filesDir, "duo.txt") }
+    private val configFile by lazy { File(filesDir, "ty.txt") }
 
     private val gson = Gson()
     protected var mSwipeBackHelper: SwipeBackHelper? = null
