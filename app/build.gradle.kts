@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.ukajed.zgqq12"
+    namespace = "com.alibaba.zgjq2025"
     compileSdk = 34
 
     signingConfigs {
@@ -21,12 +21,12 @@ android {
     }
 
     defaultConfig {
-         applicationId = "com.ukajed.zgqq12"
+         applicationId = "com.alibaba.zgjq2025"
 //        applicationId = randomPackage()
         minSdk = 21
         targetSdk = 34
         versionCode = 1
-        versionName = "1.3"
+        versionName = "1.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -1,4 +1,4 @@
-package com.ukajed.zgqq12
+package com.alibaba.zgjq2025
 
 import android.app.Application
 import com.drake.net.NetConfig
