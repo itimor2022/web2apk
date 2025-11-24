@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.baidu.tty2025"
+    namespace = "com.sina.tty2025"
     compileSdk = 34
 
     signingConfigs {
@@ -21,12 +21,12 @@ android {
     }
 
     defaultConfig {
-         applicationId = "com.baidu.tty2025"
+         applicationId = "com.sina.tty2025"
 //        applicationId = randomPackage()
         minSdk = 21
         targetSdk = 34
         versionCode = 1
-        versionName = "1.2"
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -1,4 +1,4 @@
-package com.baidu.tty2025
+package com.sina.tty2025
 
 import android.app.Activity
 import android.view.MotionEvent
