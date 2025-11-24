@@ -1,4 +1,4 @@
-package com.hauwei.shgg2025
+package com.huawei.shgg2025
 
 import android.app.Activity
 import android.view.MotionEvent

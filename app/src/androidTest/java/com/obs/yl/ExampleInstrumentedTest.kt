@@ -1,4 +1,4 @@
-package com.hauwei.shgg2025
+package com.huawei.shgg2025
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.hauwei.shgg2025", appContext.packageName)
+        assertEquals("com.huawei.shgg2025", appContext.packageName)
     }
 }
