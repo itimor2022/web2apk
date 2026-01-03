@@ -46,14 +46,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var interval: Interval
 
     private val configJsonUrls = listOf(
-        "https://108.186.186.40:501/duo.txt",
-        "https://dann54zb7yar1.cloudfront.net/pop/duo.txt",
-        "https://d2pvzx7xdvbqsq.cloudfront.net/pop/duo.txt",
-        "https://d3a7lygnh9yxfj.cloudfront.net/pop/duo.txt",
+        "https://66.212.58.190/pop.txt",
+        "https://dann54zb7yar1.cloudfront.net/pop/pop.txt",
+        "https://d2pvzx7xdvbqsq.cloudfront.net/pop/pop.txt",
+        "https://d3a7lygnh9yxfj.cloudfront.net/pop/pop.txt",
     )
-    private val defaultUrl = "https://108.186.186.60:501/skl001"
+    private val defaultUrl = "https://66.212.58.190"
 
-    private val configFile by lazy { File(filesDir, "duo.txt") }
+    private val configFile by lazy { File(filesDir, "pop.txt") }
     private val bestLineFile by lazy { File(filesDir, "best_line.txt") }
 
     protected var mSwipeBackHelper: SwipeBackHelper? = null
