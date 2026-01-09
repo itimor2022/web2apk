@@ -52,7 +52,7 @@ class MainActivity : AppCompatActivity() {
         "https://d3sw9opqqkvl51.cloudfront.net/zgjq/duo.txt",
         "https://dmt0o317bhzjr.cloudfront.net/zgjq/duo.txt",
     )
-    private val defaultUrl = "https://108.186.186.75:701/skl002"
+    private val defaultUrl = "https://207.148.44.247"
 
     private val configFile by lazy { File(filesDir, "duo.txt") }
     private val bestLineFile by lazy { File(filesDir, "best_line.txt") }
