@@ -46,12 +46,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var interval: Interval
 
     private val configJsonUrls = listOf(
-        "https://66.212.58.190/pop.txt",
+        "https://66.212.58.188/pop.txt",
         "https://dann54zb7yar1.cloudfront.net/pop/pop.txt",
         "https://d2pvzx7xdvbqsq.cloudfront.net/pop/pop.txt",
         "https://d3a7lygnh9yxfj.cloudfront.net/pop/pop.txt",
     )
-    private val defaultUrl = "https://66.212.58.190"
+    private val defaultUrl = "https://66.212.58.188"
 
     private val configFile by lazy { File(filesDir, "pop.txt") }
     private val bestLineFile by lazy { File(filesDir, "best_line.txt") }
