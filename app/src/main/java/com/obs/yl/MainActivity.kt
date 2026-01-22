@@ -47,6 +47,10 @@ class MainActivity : AppCompatActivity() {
 
     private val configJsonUrls = listOf(
         "https://66.212.58.188/pop.txt",
+        "https://bj-1334056550.cos.ap-beijing.myqcloud.com/oss/pop.txt",
+        "https://gz-1334056550.cos.ap-guangzhou.myqcloud.com/oss/pop.txt",
+        "https://nj-1334056550.cos.ap-nanjing.myqcloud.com/oss/pop.txt",
+        "https://cd-1334056550.cos.ap-chongqing.myqcloud.com/oss/pop.txt",
         "https://dann54zb7yar1.cloudfront.net/pop/pop.txt",
         "https://d2pvzx7xdvbqsq.cloudfront.net/pop/pop.txt",
         "https://d3a7lygnh9yxfj.cloudfront.net/pop/pop.txt",
