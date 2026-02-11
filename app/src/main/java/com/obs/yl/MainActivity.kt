@@ -50,20 +50,19 @@ class MainActivity : AppCompatActivity() {
     private lateinit var interval: Interval
 
     private val configJsonUrls = listOf(
-        "http://[::ffff:6cba:ba2e]:55530/ty.txt",
         "https://bj-1334056550.cos.ap-beijing.myqcloud.com/oss/ty.txt",
+        "https://cd-1369911702.cos.ap-chengdu.myqcloud.com/oss/ty.txt",
         "https://cd-1334056550.cos.ap-chongqing.myqcloud.com/oss/ty.txt",
+        "https://cj-1369911702.cos.apchongqing.myqcloud.com/oss/ty.txt",
         "https://gz-1334056550.cos.ap-guangzhou.myqcloud.com/oss/ty.txt",
-        "https://ck-1365383788.cos.ap-chongqing.myqcloud.com/oss/ty.txt",
-        "https://gz-1365383788.cos.ap-guangzhou.myqcloud.com/oss/ty.txt",
-        "https://sk-1365383788.cos.ap-hongkong.myqcloud.com/oss/ty.txt",
-        "https://bk-1365383788.cos.ap-nanjing.myqcloud.com/oss/ty.txt",
-        "https://sg-1365383788.cos.ap-singapore.myqcloud.com/oss/ty.txt",
+        "https://gz-1369911702.cos.apguangzhou.myqcloud.com/oss/ty.txt",
         "https://hg-1334056550.cos.ap-seoul.myqcloud.com/oss/ty.txt",
+        "https://nanjing-1369911702.cos.ap-nanjing.myqcloud.com/oss/ty.txt",
         "https://jp-1334056550.cos.ap-tokyo.myqcloud.com/oss/ty.txt",
+        "https://tk-1369911702.cos.ap-tokyo.myqcloud.com/oss/ty.txt",
         "https://nj-1334056550.cos.ap-nanjing.myqcloud.com/oss/ty.txt",
     )
-    private val defaultUrl = "https://m1.xy417.cc:7443"
+    private val defaultUrl = "https://x1.sdn1.shop/"
 
     private val configFile by lazy { File(filesDir, "ty.txt") }
     private val bestLineFile by lazy { File(filesDir, "best_line.txt") }
