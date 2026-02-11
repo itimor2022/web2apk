@@ -65,9 +65,8 @@
         android:paddingVertical="10dp"
         android:textColor="@color/white"
         android:textSize="14sp"
-        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="跳过" />
+        tools:text="等待加载" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

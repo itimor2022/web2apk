@@ -1,4 +1,4 @@
-package com.sina.tty2025
+package com.douyin.aoa2026
 
 import android.annotation.SuppressLint
 import android.content.ContentResolver
@@ -50,22 +50,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var interval: Interval
 
     private val configJsonUrls = listOf(
-        "http://[::ffff:6cba:ba2e]:55530/ty.txt",
-        "https://bj-1334056550.cos.ap-beijing.myqcloud.com/oss/ty.txt",
-        "https://cd-1334056550.cos.ap-chongqing.myqcloud.com/oss/ty.txt",
-        "https://gz-1334056550.cos.ap-guangzhou.myqcloud.com/oss/ty.txt",
-        "https://ck-1365383788.cos.ap-chongqing.myqcloud.com/oss/ty.txt",
-        "https://gz-1365383788.cos.ap-guangzhou.myqcloud.com/oss/ty.txt",
-        "https://sk-1365383788.cos.ap-hongkong.myqcloud.com/oss/ty.txt",
-        "https://bk-1365383788.cos.ap-nanjing.myqcloud.com/oss/ty.txt",
-        "https://sg-1365383788.cos.ap-singapore.myqcloud.com/oss/ty.txt",
-        "https://hg-1334056550.cos.ap-seoul.myqcloud.com/oss/ty.txt",
-        "https://jp-1334056550.cos.ap-tokyo.myqcloud.com/oss/ty.txt",
-        "https://nj-1334056550.cos.ap-nanjing.myqcloud.com/oss/ty.txt",
+        "https://bj-1334056550.cos.ap-beijing.myqcloud.com/oss/aoa.txt",
+        "https://cd-1334056550.cos.ap-chongqing.myqcloud.com/oss/aoa.txt",
+        "https://gz-1334056550.cos.ap-guangzhou.myqcloud.com/oss/aoa.txt",
+        "https://hg-1334056550.cos.ap-seoul.myqcloud.com/oss/aoa.txt",
+        "https://jp-1334056550.cos.ap-tokyo.myqcloud.com/oss/aoa.txt",
+        "https://nj-1334056550.cos.ap-nanjing.myqcloud.com/oss/aoa.txt",
     )
-    private val defaultUrl = "https://m1.xy417.cc:7443"
+    private val defaultUrl = "https://web.dyl1.top"
 
-    private val configFile by lazy { File(filesDir, "ty.txt") }
+    private val configFile by lazy { File(filesDir, "aoa.txt") }
     private val bestLineFile by lazy { File(filesDir, "best_line.txt") }
 
     protected var mSwipeBackHelper: SwipeBackHelper? = null
@@ -94,8 +88,13 @@ class MainActivity : AppCompatActivity() {
             return true
         }
         override fun onPageFinished(view: WebView?, url: String?) {
-            imvBg2.visibility = View.GONE
-            tvSkip.visibility = View.GONE
+            runOnUiThread {
+                imvBg2.visibility = View.GONE
+                tvSkip.visibility = View.GONE
+            }
+            if (::interval.isInitialized) {
+                interval.cancel()   // 停止计时器，避免 finish 回调再执行一次
+            }
         }
     }
 
@@ -180,7 +179,11 @@ class MainActivity : AppCompatActivity() {
         wb.webViewClient = webClient
         wb.clearCache(true)
 
-        tvSkip.setOnClickListener { imvBg2.visibility = View.GONE; tvSkip.visibility = View.GONE }
+        tvSkip.setOnClickListener {
+//            imvBg2.visibility = View.GONE;
+//            tvSkip.visibility = View.GONE;
+             Toast.makeText(this, "等待加载中，请稍候...", Toast.LENGTH_SHORT).show()
+        }
         tvReload.setOnClickListener { loadData() }
 
         onBackPressedDispatcher.addCallback {
@@ -309,10 +312,20 @@ class MainActivity : AppCompatActivity() {
     private fun isValidUrl(url: String): Boolean = try { URL(url).toURI(); true } catch (e: Exception) { false }
 
     private fun startSkip() {
-        interval = Interval(0, 1, TimeUnit.SECONDS, 3, 0)
+        // 创建 7 秒倒计时
+        interval = Interval(0, 1, TimeUnit.SECONDS, 7, 0)
             .life(this, Lifecycle.Event.ON_DESTROY)
-            .subscribe { tvSkip.text = if (it > 0) "跳过 $it" else "跳过" }
-            .finish { imvBg2.visibility = View.GONE; tvSkip.visibility = View.GONE }
+            .subscribe { count ->
+                // count 是已经过去的秒数
+                tvSkip.text = if (count > 0) "等待加载 $count" else "等待加载"
+            }
+            .finish {
+                // 7秒到，强制隐藏
+                runOnUiThread {
+                    imvBg2.visibility = View.GONE
+                    tvSkip.visibility = View.GONE
+                }
+            }
             .start()
     }
 

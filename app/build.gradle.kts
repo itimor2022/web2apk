@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.sina.tty2025"
+    namespace = "com.douyin.aoa2026"
     compileSdk = 34
 
     signingConfigs {
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-         applicationId = "com.sina.tty2025"
+         applicationId = "com.douyin.aoa2026"
 //        applicationId = randomPackage()
         minSdk = 21
         targetSdk = 34
