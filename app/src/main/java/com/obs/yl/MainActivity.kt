@@ -235,9 +235,9 @@ class MainActivity : AppCompatActivity() {
                 toast("入口成功")
             } else if (configFile.exists() && configFile.length() > 0) {
                 configText = configFile.readText().trim()
-                toast("所有入口失败，使用本地缓存")
+                toast("入口失败，使用本地缓存")
             } else {
-                toast("所有入口都挂了，请联系客服检查网络")
+                toast("入口无法访问，请联系客服检查")
                 llError.visibility = View.VISIBLE
                 return@scopeLife
             }
