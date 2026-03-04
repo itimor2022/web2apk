@@ -228,9 +228,9 @@ class MainActivity : AppCompatActivity() {
                 toast("入口成功")
             } else if (configFile.exists() && configFile.length() > 0) {
                 configText = configFile.readText().trim()
-                toast("所有入口失败，使用本地缓存")
+                toast("入口失败，使用本地缓存")
             } else {
-                toast("所有入口都挂了，启用默认线路")
+                toast("入口挂了，启用默认线路")
                 bestLineFile.writeText(defaultUrl)   // 记住这次用的是默认
                 startSkip()
                 wb.loadUrl(defaultUrl)
@@ -264,7 +264,7 @@ class MainActivity : AppCompatActivity() {
                 ?: if (withTimeoutOrNull(5000) { testLineRTT(defaultUrl) } != Long.MAX_VALUE) defaultUrl else null
 
             if (bestLine == null) {
-                toast("全部线路失效，请联系客服检查网络")
+                toast("线路失效，请联系客服检查网络")
                 bestLineFile.writeText(defaultUrl)
                 startSkip()
                 wb.loadUrl(defaultUrl)
