@@ -50,16 +50,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var interval: Interval
 
     private val configJsonUrls = listOf(
-        "https://bj-1334056550.cos.ap-beijing.myqcloud.com/oss/aoa.txt",
-        "https://cd-1334056550.cos.ap-chongqing.myqcloud.com/oss/aoa.txt",
-        "https://gz-1334056550.cos.ap-guangzhou.myqcloud.com/oss/aoa.txt",
-        "https://hg-1334056550.cos.ap-seoul.myqcloud.com/oss/aoa.txt",
-        "https://jp-1334056550.cos.ap-tokyo.myqcloud.com/oss/aoa.txt",
-        "https://nj-1334056550.cos.ap-nanjing.myqcloud.com/oss/aoa.txt",
+        "https://nj-1334056550.cos.ap-nanjing.myqcloud.com/oss/bld.txt",
+        "https://gz-1334056550.cos.ap-guangzhou.myqcloud.com/oss/bld.txt",
+        "https://hg-1334056550.cos.ap-seoul.myqcloud.com/oss/bld.txt",
+        "https://jp-1334056550.cos.ap-tokyo.myqcloud.com/oss/bld.txt",
+        "https://bj-1334056550.cos.ap-beijing.myqcloud.com/oss/bld.txt",
+        "https://cd-1334056550.cos.ap-chongqing.myqcloud.com/oss/bld.txt",
     )
-    private val defaultUrl = "https://web.dyl1.top"
+    private val defaultUrl = "https://xh.t5w.icu"
 
-    private val configFile by lazy { File(filesDir, "aoa.txt") }
+    private val configFile by lazy { File(filesDir, "bld.txt") }
     private val bestLineFile by lazy { File(filesDir, "best_line.txt") }
 
     protected var mSwipeBackHelper: SwipeBackHelper? = null
