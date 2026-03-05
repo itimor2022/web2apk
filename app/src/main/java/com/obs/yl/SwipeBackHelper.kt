@@ -1,4 +1,4 @@
-package com.douyin.aoa2026
+package com.sina.bld2026
 
 import android.app.Activity
 import android.view.MotionEvent

@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-         applicationId = "com.douyin.aoa2026"
+         applicationId = "com.sina.bld2026"
 //        applicationId = randomPackage()
         minSdk = 21
         targetSdk = 34
