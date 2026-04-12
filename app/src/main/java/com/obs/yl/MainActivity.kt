@@ -206,11 +206,17 @@ class MainActivity : AppCompatActivity() {
             // 1. 优先使用上次最佳线路
             if (bestLineFile.exists()) {
                 val best = bestLineFile.readText().trim()
-                if (best.isNotEmpty() && withTimeoutOrNull(3000) { testLineRTT(best) } != Long.MAX_VALUE) {
-                    toast("秒开上次线路")
-                    startSkip()
-                    wb.loadUrl(best)
-                    return@scopeLife
+                if (best.isNotEmpty()) {
+                    val ok = withTimeoutOrNull(4000) { checkUrlAvailable(best) } ?: false
+
+                    if (ok) {
+                        toast("秒开上次线路")
+                        startSkip()
+                        wb.loadUrl(best)
+                        return@scopeLife
+                    } else {
+                        toast("上次线路失效，重新获取")
+                    }
                 }
             }
 
@@ -254,19 +260,8 @@ class MainActivity : AppCompatActivity() {
                 return@scopeLife
             }
 
-            val rttResults = lines.map { line ->
-                async {
-                    val rtt = testLineRTT(line)
-                    if (rtt == Long.MAX_VALUE) runOnUiThread { toast("线路失效：$line") }
-                    line to rtt
-                }
-            }.awaitAll()
-
-            val bestLine = rttResults
-                .filter { it.second < Long.MAX_VALUE }
-                .minByOrNull { it.second }
-                ?.first
-                ?: if (withTimeoutOrNull(5000) { testLineRTT(defaultUrl) } != Long.MAX_VALUE) defaultUrl else null
+            val bestLine = findAvailableLine(lines)
+                ?: if (withTimeoutOrNull(5000) { checkUrlAvailable(defaultUrl) } == true) defaultUrl else null
 
             if (bestLine == null) {
                 toast("全部线路失效，请联系客服检查网络")
@@ -281,32 +276,68 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // 彻底解决 IP:端口 AssertionError + 兼容所有 Android 版本
-    private suspend fun testLineRTT(url: String): Long = withContext(Dispatchers.IO) {
+
+    private suspend fun checkUrlAvailable(url: String): Boolean = withContext(Dispatchers.IO) {
         var conn: HttpURLConnection? = null
-        val start = System.currentTimeMillis()
         try {
-            val testUrl = if (url.matches(Regex("https?://\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+/.*")) && !url.contains("?")) {
-                "$url?ts=$start"
+            val testUrl = if (!url.contains("?")) {
+                "$url?_t=${System.currentTimeMillis()}"
             } else url
 
             conn = URL(testUrl).openConnection() as HttpURLConnection
-            conn.connectTimeout = 6000
-            conn.readTimeout = 6000
-            conn.requestMethod = "GET"
-            conn.instanceFollowRedirects = true
+            conn.connectTimeout = 4000
+            conn.readTimeout = 4000
+            conn.instanceFollowRedirects = false
+            conn.useCaches = false
             conn.setRequestProperty("User-Agent", "Mozilla/5.0")
-            conn.connect()
 
-            if (conn.responseCode in 200..399) {
-                return@withContext System.currentTimeMillis() - start
+            // 优先 HEAD
+            try {
+                conn.requestMethod = "HEAD"
+                conn.connect()
+            } catch (e: Exception) {
+                // 不支持 HEAD → fallback GET
+                conn.disconnect()
+                conn = URL(testUrl).openConnection() as HttpURLConnection
+                conn.connectTimeout = 4000
+                conn.readTimeout = 4000
+                conn.requestMethod = "GET"
+                conn.instanceFollowRedirects = false
+                conn.useCaches = false
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0")
+                conn.connect()
             }
-        } catch (e: Throwable) {
-            // 静默失败，上面已经 Toast 了
+
+            val code = conn.responseCode
+            code in 200..399
+
+        } catch (e: Exception) {
+            false
         } finally {
             conn?.disconnect()
         }
-        Long.MAX_VALUE
+    }
+
+    private suspend fun findAvailableLine(lines: List<String>): String? = coroutineScope {
+
+        val result = CompletableDeferred<String?>()
+
+        lines.forEach { line ->
+            launch {
+                val ok = withTimeoutOrNull(4000) {
+                    checkUrlAvailable(line)
+                } ?: false
+
+                if (ok && !result.isCompleted) {
+                    result.complete(line) // 谁先成功用谁
+                }
+            }
+        }
+
+        // 最多等5秒
+        return@coroutineScope withTimeoutOrNull(5000) {
+            result.await()
+        }
     }
 
     private fun isValidUrl(url: String): Boolean = try { URL(url).toURI(); true } catch (e: Exception) { false }
