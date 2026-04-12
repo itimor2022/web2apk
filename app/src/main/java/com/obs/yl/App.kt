@@ -1,4 +1,4 @@
-package com.sina.tty2025
+package com.sina.tty2026
 
 import android.app.Application
 import com.drake.net.NetConfig

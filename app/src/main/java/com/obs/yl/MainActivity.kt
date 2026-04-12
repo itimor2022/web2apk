@@ -1,4 +1,4 @@
-package com.sina.tty2025
+package com.sina.tty2026
 
 import android.annotation.SuppressLint
 import android.content.ContentResolver
@@ -48,6 +48,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvReload: TextView
     private lateinit var llError: LinearLayout
     private lateinit var interval: Interval
+    private var pageStartTime: Long = 0
 
     private val configJsonUrls = listOf(
         "https://bj-1334056550.cos.ap-beijing.myqcloud.com/oss/ty.txt",
@@ -95,6 +96,9 @@ class MainActivity : AppCompatActivity() {
         override fun onPageFinished(view: WebView?, url: String?) {
             imvBg2.visibility = View.GONE
             tvSkip.visibility = View.GONE
+
+//            val cost = System.currentTimeMillis() - pageStartTime
+//            toast("打开耗时：${cost}ms")
         }
     }
 
@@ -202,11 +206,14 @@ class MainActivity : AppCompatActivity() {
             // 1. 优先使用上次最佳线路
             if (bestLineFile.exists()) {
                 val best = bestLineFile.readText().trim()
-                if (best.isNotEmpty() && withTimeoutOrNull(3000) { testLineRTT(best) } != Long.MAX_VALUE) {
-                    toast("秒开上次线路")
-                    startSkip()
-                    wb.loadUrl(best)
-                    return@scopeLife
+                if (best.isNotEmpty()) {
+                    val (ok, _) = withTimeoutOrNull(3000) { checkUrlAvailable(best) } ?: (false to 0)
+                    if (ok) {
+                        toast("秒开上次线路")
+                        startSkip()
+                        loadWithTime(best)
+                        return@scopeLife
+                    }
                 }
             }
 
@@ -238,31 +245,24 @@ class MainActivity : AppCompatActivity() {
                 return@scopeLife
             }
 
-            // 3. 并发测速线路（失败的也 Toast）
             val lines = configText.lines()
                 .map { it.trim() }
                 .filter { it.isNotEmpty() && isValidUrl(it) }
                 .distinct()
 
-            if (lines.isEmpty()) {
-                toast("线路列表为空")
-                llError.visibility = View.VISIBLE
-                return@scopeLife
-            }
-
-            val rttResults = lines.map { line ->
+            // 3. 并发测速线路
+            val resultList = lines.map { line ->
                 async {
-                    val rtt = testLineRTT(line)
-                    if (rtt == Long.MAX_VALUE) runOnUiThread { toast("线路失效：$line") }
-                    line to rtt
+                    val (ok, time) = checkUrlAvailable(line)
+                    if (!ok) runOnUiThread { toast("线路失效：$line") }
+                    line to time
                 }
             }.awaitAll()
 
-            val bestLine = rttResults
+            val bestLine = resultList
                 .filter { it.second < Long.MAX_VALUE }
                 .minByOrNull { it.second }
                 ?.first
-                ?: if (withTimeoutOrNull(5000) { testLineRTT(defaultUrl) } != Long.MAX_VALUE) defaultUrl else null
 
             if (bestLine == null) {
                 toast("全部线路失效，请联系客服检查网络")
@@ -273,36 +273,34 @@ class MainActivity : AppCompatActivity() {
             bestLineFile.writeText(bestLine)
             toast("使用最快线路")
             startSkip()
-            wb.loadUrl(bestLine)
+            loadWithTime(bestLine)
         }
     }
 
     // 彻底解决 IP:端口 AssertionError + 兼容所有 Android 版本
-    private suspend fun testLineRTT(url: String): Long = withContext(Dispatchers.IO) {
+    private suspend fun checkUrlAvailable(url: String): Pair<Boolean, Long> = withContext(Dispatchers.IO) {
         var conn: HttpURLConnection? = null
         val start = System.currentTimeMillis()
         try {
-            val testUrl = if (url.matches(Regex("https?://\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+/.*")) && !url.contains("?")) {
-                "$url?ts=$start"
-            } else url
+            val testUrl = if (!url.contains("?")) "$url?_t=$start" else url
 
             conn = URL(testUrl).openConnection() as HttpURLConnection
-            conn.connectTimeout = 6000
-            conn.readTimeout = 6000
+            conn.connectTimeout = 5000
+            conn.readTimeout = 5000
             conn.requestMethod = "GET"
             conn.instanceFollowRedirects = true
             conn.setRequestProperty("User-Agent", "Mozilla/5.0")
             conn.connect()
 
-            if (conn.responseCode in 200..399) {
-                return@withContext System.currentTimeMillis() - start
+            val code = conn.responseCode
+            if (code in 200..399) {
+                return@withContext true to (System.currentTimeMillis() - start)
             }
-        } catch (e: Throwable) {
-            // 静默失败，上面已经 Toast 了
+        } catch (e: Exception) {
         } finally {
             conn?.disconnect()
         }
-        Long.MAX_VALUE
+        false to Long.MAX_VALUE
     }
 
     private fun isValidUrl(url: String): Boolean = try { URL(url).toURI(); true } catch (e: Exception) { false }
@@ -315,6 +313,10 @@ class MainActivity : AppCompatActivity() {
             .start()
     }
 
+    private fun loadWithTime(url: String) {
+        pageStartTime = System.currentTimeMillis()
+        wb.loadUrl(url)
+    }
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean =
         mSwipeBackHelper.dispatchTouchEvent(ev) { super.dispatchTouchEvent(ev) }
 }
